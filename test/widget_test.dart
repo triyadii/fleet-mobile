@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:fleet_manajemen/core/utils/json_utils.dart';
+import 'package:fleet_manajemen/data/models/telemetry_point.dart';
+import 'package:fleet_manajemen/data/models/vehicle.dart';
+import 'package:fleet_manajemen/data/repositories/telemetry_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fleet_manajemen/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('json parsing', () {
+    test('extractList handles common envelopes', () {
+      expect(extractList([{'id': 1}]), hasLength(1));
+      expect(extractList({'data': [{'id': 1}]}), hasLength(1));
+      expect(extractList({'data': {'data': [{'id': 1}]}}), hasLength(1));
+      expect(extractList({'data': {'logs': [{'id': 1}]}}, key: 'logs'), hasLength(1));
+      expect(extractList({'message': 'x'}), isEmpty);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('TelemetryPoint accepts string coordinates', () {
+      final p = TelemetryPoint.tryParse({'lat': '-6.2', 'lng': 106.8, 'speed': '40'})!;
+      expect(p.lat, -6.2);
+      expect(p.speedKmh, 40);
+      expect(TelemetryPoint.tryParse({'lat': null, 'lng': 1}), isNull);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('Vehicle matches driver by uuid or id', () {
+      final v = Vehicle.tryParse({'id': '3', 'user_uuid': 'abc', 'plate_number': 'B 1'})!;
+      expect(v.id, 3);
+      expect(v.isAssignedTo(userUuid: 'abc'), isTrue);
+      expect(v.isAssignedTo(userId: 9), isFalse);
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('timestamps are sent in WIB (UTC+7)', () {
+    final s = TelemetryRepository.formatServerTimestamp(DateTime.utc(2026, 10, 8, 10, 30));
+    expect(s, '2026-10-08T17:30:00+07:00');
   });
 }

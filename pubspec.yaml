@@ -1,5 +1,5 @@
 name: fleet_manajemen
-description: "A new Flutter project."
+description: "FleetTrack Driver - live GPS & dashcam telemetry for fleet vehicles."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.13.4
+  sdk: ^3.9.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -43,6 +43,11 @@ dependencies:
   camera: ^0.12.1
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
+  dio: ^5.11.1
+  google_fonts: ^8.2.1
+  flutter_animate: ^4.5.2
+  gap: ^3.0.1
+  google_mlkit_face_detection: ^0.15.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -65,6 +70,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -101,5 +109,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
-  adaptive_icon_background: "#1a1a2e"
-  adaptive_icon_foreground: "assets/icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#172554"
+  adaptive_icon_foreground: "assets/icon_foreground.png"

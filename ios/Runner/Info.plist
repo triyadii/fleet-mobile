@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FleetTrack takes periodic dashcam snapshots while tracking is active.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FleetTrack may record cabin audio for trip safety.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FleetTrack shares your vehicle location with your fleet while tracking.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FleetTrack keeps sharing your location while the app is in the background.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+	</array>
 </dict>
 </plist>
