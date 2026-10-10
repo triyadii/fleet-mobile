@@ -238,7 +238,12 @@ class TrackingController extends ChangeNotifier {
         return;
       }
       final snapshot = await camera.capture();
-      await _telemetry.submit(vehicleId: id, point: point, snapshot: snapshot);
+      await _telemetry.submit(
+        vehicleId: id,
+        point: point,
+        snapshot: snapshot,
+        driver: monitor.takeStatus(),
+      );
 
       samplesSent++;
       if (snapshot != null) snapshotsSent++;

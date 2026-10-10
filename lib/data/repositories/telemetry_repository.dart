@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../core/utils/json_utils.dart';
+import '../../services/driver_monitor_service.dart';
 import '../models/telemetry_point.dart';
 
 /// Read/write access to `/api/telemetry`.
@@ -21,6 +22,7 @@ class TelemetryRepository {
     required int vehicleId,
     required TelemetryPoint point,
     Uint8List? snapshot,
+    DriverStatus? driver,
   }) async {
     final form = FormData.fromMap({
       'vehicle_id': vehicleId,
@@ -28,6 +30,14 @@ class TelemetryRepository {
       'lng': point.lng,
       'speed': (point.speedKmh ?? 0).toStringAsFixed(1),
       'timestamp': formatServerTimestamp(point.timestamp ?? DateTime.now()),
+      // Optional driver-state flags. Sent as 1/0, which Laravel's `boolean`
+      // rule accepts (the strings "true"/"false" would be rejected).
+      if (driver != null) ...{
+        'fokus': driver.focused ? 1 : 0,
+        'mengantuk': driver.drowsy ? 1 : 0,
+        'berisik': driver.talking ? 1 : 0,
+        'tidak_ditempat': driver.away ? 1 : 0,
+      },
       if (snapshot != null)
         'snapshot': MultipartFile.fromBytes(
           snapshot,

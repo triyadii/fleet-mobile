@@ -63,6 +63,27 @@ abstract final class MonitorThresholds {
   static const Duration cooldown = Duration(seconds: 15);
 }
 
+/// Driver-state flags sent with each telemetry sample
+/// (`fokus`, `mengantuk`, `berisik`, `tidak_ditempat` on `POST /api/telemetry`).
+///
+/// Each flag is `true` if the condition was **confirmed** (its threshold was
+/// met) at any moment since the previous sample, so short events between two
+/// uploads are not lost.
+@immutable
+class DriverStatus {
+  const DriverStatus({
+    required this.focused,
+    required this.drowsy,
+    required this.talking,
+    required this.away,
+  });
+
+  final bool focused;
+  final bool drowsy;
+  final bool talking;
+  final bool away;
+}
+
 /// Live readings, exposed for the on-screen indicator.
 @immutable
 class MonitorReading {
@@ -118,6 +139,33 @@ class DriverMonitorService {
   final _mouthCycles = <DateTime>[];
   final _lastAlertAt = <DriverAlert, DateTime>{};
 
+  // Conditions confirmed since the last [takeStatus] call.
+  bool _wasDrowsy = false;
+  bool _wasDistracted = false;
+  bool _wasTalking = false;
+  bool _wasAway = false;
+  bool _hasAnalysed = false;
+
+  /// Returns the driver status accumulated since the previous call and starts
+  /// a new window. `null` until at least one frame has been analysed (e.g.
+  /// camera off, web build), in which case the fields are simply omitted.
+  DriverStatus? takeStatus() {
+    if (!_hasAnalysed) return null;
+    final status = DriverStatus(
+      focused: !_wasDistracted && !_wasAway,
+      drowsy: _wasDrowsy,
+      talking: _wasTalking,
+      away: _wasAway,
+    );
+    // Conditions still ongoing carry into the next window.
+    final r = reading.value;
+    _wasDrowsy = _eyesClosedSince != null && r.eyesClosed && _wasDrowsy;
+    _wasDistracted = _lookingAwaySince != null && _wasDistracted;
+    _wasAway = _faceMissingSince != null && _wasAway;
+    _wasTalking = false;
+    return status;
+  }
+
   FaceDetector get _faceDetector => _detector ??= FaceDetector(
     options: FaceDetectorOptions(
       enableClassification: true, // eye-open probabilities
@@ -147,6 +195,7 @@ class DriverMonitorService {
     _lastFrame = now;
     try {
       final faces = await _faceDetector.processImage(input);
+      _hasAnalysed = true;
       _evaluate(faces, now);
     } catch (e) {
       debugPrint('Face detection failed: $e');
@@ -170,6 +219,8 @@ class DriverMonitorService {
     _faceSeenOnce = false;
     _mouthOpen = false;
     _mouthCycles.clear();
+    _wasDrowsy = _wasDistracted = _wasTalking = _wasAway = false;
+    _hasAnalysed = false;
     reading.value = const MonitorReading();
   }
 
@@ -191,6 +242,7 @@ class DriverMonitorService {
         _faceMissingSince ??= now;
         if (now.difference(_faceMissingSince!) >=
             MonitorThresholds.faceMissingFor) {
+          _wasAway = true;
           _raise(DriverAlert.distracted, now);
         }
       }
@@ -238,6 +290,7 @@ class DriverMonitorService {
     }
     _eyesClosedSince ??= now;
     if (now.difference(_eyesClosedSince!) >= MonitorThresholds.eyesClosedFor) {
+      _wasDrowsy = true;
       _raise(DriverAlert.drowsy, now);
     }
     return true;
@@ -259,6 +312,7 @@ class DriverMonitorService {
     _lookingAwaySince ??= now;
     if (now.difference(_lookingAwaySince!) >=
         MonitorThresholds.lookingAwayFor) {
+      _wasDistracted = true;
       _raise(DriverAlert.distracted, now);
     }
     return true;
@@ -290,6 +344,7 @@ class DriverMonitorService {
     );
     final talking = _mouthCycles.length >= MonitorThresholds.talkingCycles ~/ 2;
     if (_mouthCycles.length >= MonitorThresholds.talkingCycles) {
+      _wasTalking = true;
       _raise(DriverAlert.talking, now);
       _mouthCycles.clear();
     }
