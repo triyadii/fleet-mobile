@@ -13,7 +13,7 @@ abstract final class AppConfig {
   /// Default backend root (without the `/api` suffix).
   static const String defaultBaseUrl = String.fromEnvironment(
     'FLEET_BASE_URL',
-    defaultValue: 'https://dicotriyadi.site/fleet',
+    defaultValue: 'https://mdt-solution.site/fleet-backend',
   );
 
   /// How often a telemetry sample is pushed while tracking is active.

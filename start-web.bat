@@ -16,7 +16,7 @@ set "PROJ=%~dp0"
 set "PROJ=%PROJ:~0,-1%"
 
 rem URL API — diteruskan ke aplikasi lewat --dart-define (lihat AppConfig).
-set "API_URL=https://dicotriyadi.site/fleet"
+set "API_URL=https://mdt-solution.site/fleet-backend"
 set "WEB_HOST=127.0.0.1"
 set "WEB_PORT=5173"
 
